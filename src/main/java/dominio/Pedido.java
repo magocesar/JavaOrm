@@ -1,200 +1,217 @@
 package dominio;
 
 import java.io.Serializable;
-import javax.persistence.CascadeType;
+import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Persistence;
+import java.util.ArrayList;
+import java.time.LocalDate;
+import javax.persistence.GenerationType;
 
 @Entity
 public class Pedido implements Serializable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private LocalDate data;
     private String status;
-    
-    @JoinColumn(name = "cliente_id")
+
+    @ManyToOne
     private Cliente cliente;
 
-    @JoinColumn(name = "caixa_id")
-    private Caixa caixa;
+    @OneToOne(mappedBy = "pedido", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
+    private NotaFiscal notaFiscal;
 
-    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ArrayList<Pagamento> pagamentos = new ArrayList<Pagamento>();
+    public Pedido(){
 
-    public Pedido(){}
-
-    public Pedido(LocalDate data, String status, Cliente cliente, Caixa caixa) {
-        this.id = null;
-        this.data = data;
-        this.status = status;
-        this.cliente = cliente;
-        this.caixa = caixa;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public LocalDate getData() {
-        return data;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-    }
-
-    public Caixa getCaixa() {
-        return caixa;
-    }
-
-    public ArrayList<Pagamento> getPagamentos() {
-        return pagamentos;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public void setData(LocalDate data) {
-        this.data = data;
-    }
-
-    public void setStatus(String status) {
+    public Pedido(String status){
         this.status = status;
     }
 
-    public void setCliente(Cliente cliente) {
+    public void setStatus(String status){
+        this.status = status;
+    }
+
+    public void setCliente(Cliente cliente){
         this.cliente = cliente;
     }
 
-    public void setCaixa(Caixa caixa) {
-        this.caixa = caixa;
+    public void setNotaFiscal(NotaFiscal notaFiscal){
+        this.notaFiscal = notaFiscal;
     }
 
-    public void setPagamentos(ArrayList<Pagamento> pagamentos) {
-        this.pagamentos = pagamentos;
+    public String getStatus(){
+        return this.status;
     }
 
-    public boolean atualizarStatus(String status){
-        if(status.equals("Aberto") || status.equals("Fechado")){
+    public Cliente getCliente(){
+        return this.cliente;
+    }
+
+    public NotaFiscal getNotaFiscal(){
+        return this.notaFiscal;
+    }
+
+    public Integer getId(){
+        return this.id;
+    }
+
+    public static Pedido find(Integer id){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        Pedido pedido = em.find(Pedido.class, id);
+
+        em.close();
+        emf.close();
+
+        return pedido;
+    }
+
+    public static Pedido findByNotaFiscal(Integer id_nota_fiscal){
+
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        Pedido pedido = em.find(Pedido.class, id_nota_fiscal);
+
+        em.close();
+        emf.close();
+
+        return pedido;
+    }
+
+    public boolean update(String status){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        String old_status = this.status;
+        boolean commit = false;
+
+        try{
+
             this.status = status;
-            return true;
-        }
-        return false;
-    }
-
-    //Insert
-    public static Pedido criarPedido(LocalDate data, String status, Cliente cliente, Caixa caixa){
-        Pedido p = new Pedido(data, status, cliente, caixa);
-        return p;
-    }
-
-    //Select
-    public static Pedido buscarPedido(int id){
-        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        Pedido p = em.find(Pedido.class, id);
-        em.close();
-        emf.close();
-        return p;
-    }
-
-    //Delete
-    public static boolean removerPedido(int id){
-        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        Pedido p = em.find(Pedido.class, id);
-        em.getTransaction().begin();
-        try{
-            em.remove(p);
+            em.getTransaction().begin();
+            em.merge(this);
             em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
+            commit = true;
+
         }catch(Exception e){
-            em.getTransaction().rollback();
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+            this.status = old_status;
+
+        }finally{
+
             em.close();
             emf.close();
-            return false;
+
         }
+
+        return commit;
     }
 
-    //Update
-    public static boolean atualizarPedido(int id, LocalDate data, String status, Cliente cliente, Caixa caixa){
+    public boolean update(Cliente cliente){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        Pedido p = em.find(Pedido.class, id);
-        em.getTransaction().begin();
+        Cliente old_cliente = this.cliente;
+        boolean commit = false;
+
         try{
-            p.setData(data);
-            p.setStatus(status);
-            p.setCliente(cliente);
-            p.setCaixa(caixa);
+
+            this.cliente = cliente;
+            em.getTransaction().begin();
+            em.merge(this);
             em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
+            commit = true;
+
         }catch(Exception e){
-            em.getTransaction().rollback();
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+            this.cliente = old_cliente;
+
+        }finally{
+
             em.close();
             emf.close();
-            return false;
+
         }
+
+        return commit;
     }
 
-    //Update ArrayList
-    public static boolean atualizarPedido(int id, LocalDate data, String status, Cliente cliente, Caixa caixa, ArrayList<Pagamento> pagamentos){
+    public boolean update(NotaFiscal notaFiscal){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        Pedido p = em.find(Pedido.class, id);
-        em.getTransaction().begin();
+        NotaFiscal old_notaFiscal = this.notaFiscal;
+        boolean commit = false;
+
         try{
-            p.setData(data);
-            p.setStatus(status);
-            p.setCliente(cliente);
-            p.setCaixa(caixa);
-            p.setPagamentos(pagamentos);
+
+            this.notaFiscal = notaFiscal;
+            em.getTransaction().begin();
+            em.merge(this);
             em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
+            commit = true;
+
         }catch(Exception e){
-            em.getTransaction().rollback();
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+            this.notaFiscal = old_notaFiscal;
+
+        }finally{
+
             em.close();
             emf.close();
-            return false;
+
         }
+
+        return commit;
     }
 
-    //Select
-    public static ArrayList<Pedido> listarPedidos(){
+    public boolean remove(){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        ArrayList<Pedido> pedidos = (ArrayList<Pedido>) em.createQuery("SELECT p FROM Pedido p").getResultList();
-        em.close();
-        emf.close();
-        return pedidos;
-    }
+        boolean commit = false;
 
+        try{
 
-    public double calcularValor(){
-        double total = 0;
-        for(Pagamento p : pagamentos){
-            total += p.getValor();
+            Pedido pedido = em.find(Pedido.class, this.id);
+
+            em.getTransaction().begin();
+            em.remove(pedido);
+            em.getTransaction().commit();
+            commit = true;
+        
+        }catch(Exception e){
+            
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+        }finally{
+                
+            em.close();
+            emf.close();
+
         }
-        return total;
+        
+        return commit;
     }
 }

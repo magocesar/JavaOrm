@@ -1,155 +1,188 @@
+
 package dominio;
 
 import java.io.Serializable;
-import javax.persistence.CascadeType;
+import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Persistence;
-import java.util.ArrayList;
+import java.util.List;
+import javax.persistence.GenerationType;
 
 @Entity
 public class Cliente implements Serializable{
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String nome;
-    private String telefone;
+    private String email;
 
-    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ArrayList<Pedido> pedidos = new ArrayList<Pedido>();
+    @OneToMany(mappedBy = "cliente")
+    private List<Pedido> pedidos;
 
-    public Integer getId() {
-        return id;
+    @OneToOne(mappedBy = "cliente", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
+    private Endereco endereco;
+
+    public Cliente(){
+
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public Cliente(String nome, String email){
+        this.nome = nome;
+        this.email = email;
     }
 
-    public String getNome() {
-        return nome;
-    }
-
-    public ArrayList<Pedido> getPedidos() {
-        return pedidos;
-    }
-
-    public void setNome(String nome) {
+    public void setNome(String nome){
         this.nome = nome;
     }
 
-    public String getTelefone() {
-        return telefone;
+    public void setEmail(String email){
+        this.email = email;
     }
 
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
+    public void setEndereco(Endereco endereco){
+        this.endereco = endereco;
     }
 
-    public void setPedidos(ArrayList<Pedido> pedidos) {
-        this.pedidos = pedidos;
+    public String getNome(){
+        return this.nome;
     }
 
-    public Cliente(){}
-
-    public Cliente(String nome, String telefone) {
-        this.id = null;
-        this.nome = nome;
-        this.telefone = telefone;
+    public String getEmail(){
+        return this.email;
     }
 
-    //Insert
-    public static Cliente criarCliente(String nome, String endereço, String telefone){
-        Cliente c1 = new Cliente(nome, telefone);
-        return c1;
+    public Endereco getEndereco(){
+        return this.endereco;
     }
 
-    //Select
-    public static Cliente buscarCliente(Integer id){
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
+    public Integer getId(){
+        return this.id;
+    }
+
+    //Procurar um cliente pelo id
+    public static Cliente find(Integer id){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        Cliente c = em.find(Cliente.class, id);
+
+        Cliente cliente = em.find(Cliente.class, id);
+
         em.close();
         emf.close();
-        return c;
+
+        return cliente;
     }
 
-    //Delete
-    public static boolean removerCliente(Integer id){
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
+    //Procurar um cliente por endereço
+    public static Cliente findByEndereco(Integer id_endereco){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        Cliente c = em.find(Cliente.class, id);
-        em.getTransaction().begin();
-        try{
-            em.remove(c);
-            em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
-        }catch(Exception e){
-            em.getTransaction().rollback();
-            em.close();
-            emf.close();
-            return false;
-        }
-    }
 
-    //Update
-    public static boolean atualizarCliente(Integer id, String nome, String telefone){
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        Cliente c = em.find(Cliente.class, id);
-        em.getTransaction().begin();
-        try{
-            c.setNome(nome);
-            c.setTelefone(telefone);
-            em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
-        }catch(Exception e){
-            em.getTransaction().rollback();
-            em.close();
-            emf.close();
-            return false;
-        }
-    }
+        Cliente cliente = em.createQuery("SELECT c FROM Cliente c WHERE c.endereco.id = :id_endereco", Cliente.class).setParameter("id_endereco", id_endereco).getSingleResult();
 
-    //Update ArrayList
-    public static boolean atualizarCliente(Integer id, String nome, String telefone, ArrayList<Pedido> pedidos){
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        Cliente c = em.find(Cliente.class, id);
-        em.getTransaction().begin();
-        try{
-            c.setNome(nome);
-            c.setTelefone(telefone);
-            c.setPedidos(pedidos);
-            em.getTransaction().commit();
-            em.close();
-            emf.close();
-            return true;
-        }catch(Exception e){
-            em.getTransaction().rollback();
-            em.close();
-            emf.close();
-            return false;
-        }
-    }
-
-    //Select
-    public static ArrayList<Cliente> listarClientes(){
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        ArrayList<Cliente> clientes = (ArrayList<Cliente>) em.createQuery("SELECT c FROM Cliente c").getResultList();
         em.close();
         emf.close();
-        return clientes;
+
+        return cliente;
+    }
+
+    public boolean update(String nome, String email){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        String oldNome = this.nome;
+        String oldEmail = this.email;
+        boolean commit = false;
+        try{
+
+            this.nome = nome;
+            this.email = email;
+            em.getTransaction().begin();
+            em.merge(this);
+            em.getTransaction().commit();
+            commit = true;
+
+        }catch(Exception e){
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+            this.nome = oldNome;
+            this.email = oldEmail;
+
+        }finally{
+
+            em.close();
+            emf.close();
+
+        }
+
+        return commit;
+    }
+
+    public boolean update(Endereco endereco){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        Endereco oldEndereco = this.endereco;
+        boolean commit = false;
+
+        try{
+
+            this.endereco = endereco;
+            em.getTransaction().begin();
+            em.merge(this);
+            em.getTransaction().commit();
+            commit = true;
+
+        }catch(Exception e){
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+
+            this.endereco = oldEndereco;
+
+        }finally{
+
+            em.close();
+            emf.close();
+
+        }
+
+        return commit;
+    }
+
+    //Remover um cliente
+    public boolean remove(){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        boolean commit = false;
+
+        try{
+
+            Cliente cliente = em.find(Cliente.class, this.id);
+
+            em.getTransaction().begin();
+            em.remove(cliente);
+            em.getTransaction().commit();
+            commit = true;
+        }catch(Exception e){
+
+            if(em.getTransaction().isActive()){
+                em.getTransaction().rollback();
+            }
+        }finally{
+
+            em.close();
+            emf.close();
+
+        }
+
+        return commit;
     }
 }
