@@ -11,7 +11,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.util.ArrayList;
-import dominio.Pedido;
 
 @Entity
 public class Cliente implements Serializable{
@@ -37,6 +36,10 @@ public class Cliente implements Serializable{
         return nome;
     }
 
+    public ArrayList<Pedido> getPedidos() {
+        return pedidos;
+    }
+
     public void setNome(String nome) {
         this.nome = nome;
     }
@@ -49,24 +52,21 @@ public class Cliente implements Serializable{
         this.telefone = telefone;
     }
 
+    public void setPedidos(ArrayList<Pedido> pedidos) {
+        this.pedidos = pedidos;
+    }
+
     public Cliente(){}
 
-    private Cliente(Integer id, String nome, String telefone) {
-        this.id = id;
+    public Cliente(String nome, String telefone) {
+        this.id = null;
         this.nome = nome;
         this.telefone = telefone;
     }
 
     //Insert
     public static Cliente criarCliente(String nome, String endereço, String telefone){
-        Cliente c1 = new Cliente(null, nome, telefone);
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        em.persist(c1);
-        em.getTransaction().commit();
-        em.close();
-        emf.close();
+        Cliente c1 = new Cliente(nome, telefone);
         return c1;
     }
 
@@ -121,6 +121,28 @@ public class Cliente implements Serializable{
         }
     }
 
+    //Update ArrayList
+    public static boolean atualizarCliente(Integer id, String nome, String telefone, ArrayList<Pedido> pedidos){
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        Cliente c = em.find(Cliente.class, id);
+        em.getTransaction().begin();
+        try{
+            c.setNome(nome);
+            c.setTelefone(telefone);
+            c.setPedidos(pedidos);
+            em.getTransaction().commit();
+            em.close();
+            emf.close();
+            return true;
+        }catch(Exception e){
+            em.getTransaction().rollback();
+            em.close();
+            emf.close();
+            return false;
+        }
+    }
+
     //Select
     public static ArrayList<Cliente> listarClientes(){
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("ex");
@@ -130,14 +152,4 @@ public class Cliente implements Serializable{
         emf.close();
         return clientes;
     }
-
-    public Pedido novoPedido(Pedido p){
-        return null;
-    }
-
-
-
-
-
-
 }
