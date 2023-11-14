@@ -22,7 +22,7 @@ public class NotaFiscal implements Serializable{
     private double valor_total;
     private LocalDate data_emissao;
 
-    @OneToOne
+    @OneToOne(mappedBy = "notaFiscal", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
     private Pedido pedido;
 
     public NotaFiscal(){

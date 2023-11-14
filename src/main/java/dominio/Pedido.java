@@ -25,7 +25,7 @@ public class Pedido implements Serializable{
     @ManyToOne
     private Cliente cliente;
 
-    @OneToOne(mappedBy = "pedido", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
+    @OneToOne
     private NotaFiscal notaFiscal;
 
     public Pedido(){

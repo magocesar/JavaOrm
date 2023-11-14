@@ -13,6 +13,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Persistence;
 import java.util.List;
 import javax.persistence.GenerationType;
+import java.util.ArrayList;
 
 @Entity
 public class Cliente implements Serializable{
@@ -63,6 +64,18 @@ public class Cliente implements Serializable{
 
     public Integer getId(){
         return this.id;
+    }
+
+    public static ArrayList<Cliente> listarClientes(){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        ArrayList<Cliente> clientes = (ArrayList<Cliente>) em.createQuery("SELECT c FROM Cliente c", Cliente.class).getResultList();
+
+        em.close();
+        emf.close();
+
+        return clientes;
     }
 
     //Procurar um cliente pelo id

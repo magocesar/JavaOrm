@@ -7,10 +7,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NoResultException;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
 import javax.persistence.GenerationType;
+import java.util.ArrayList;
 
 @Entity
 public class Endereco implements Serializable{
@@ -60,6 +63,18 @@ public class Endereco implements Serializable{
         return this.id;
     }
 
+    public static ArrayList<Endereco> listarEnderecos(){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        ArrayList<Endereco> enderecos = (ArrayList<Endereco>) em.createQuery("SELECT e FROM Endereco e", Endereco.class).getResultList();
+
+        em.close();
+        emf.close();
+
+        return enderecos;
+    }
+
     public static Endereco find(Integer id){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
@@ -72,17 +87,29 @@ public class Endereco implements Serializable{
         return endereco;
     }
 
-    public static Endereco findByCliente(Integer id_cliente){
+    public static Endereco findByCliente(Integer id_cliente) {
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        
-        Endereco endereco = em.find(Endereco.class, id_cliente);
+
+        String query = "SELECT e FROM Endereco e WHERE e.cliente.id = :id_cliente";
+        TypedQuery<Endereco> typedQuery = em.createQuery(query, Endereco.class).setParameter("id_cliente", id_cliente);
+
+        Endereco endereco = null;
+
+        if (typedQuery != null) {
+            try {
+                endereco = typedQuery.getSingleResult();
+            } catch (NoResultException e) {
+                endereco = null;
+            }
+        }
 
         em.close();
         emf.close();
 
         return endereco;
     }
+
 
     public boolean update(String cep, int numero){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
