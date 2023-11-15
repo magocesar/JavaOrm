@@ -1,18 +1,14 @@
 package dominio;
 
 import java.io.Serializable;
-import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Persistence;
 import java.util.ArrayList;
-import java.time.LocalDate;
 import javax.persistence.GenerationType;
 
 @Entity
@@ -25,11 +21,17 @@ public class Pedido implements Serializable{
     @ManyToOne
     private Cliente cliente;
 
-    @OneToOne
+    @OneToOne(mappedBy = "pedido", cascade = javax.persistence.CascadeType.REMOVE, orphanRemoval = true)
     private NotaFiscal notaFiscal;
 
     public Pedido(){
 
+    }
+
+    public Pedido(String status, Cliente cliente, NotaFiscal notaFiscal){
+        this.status = status;
+        this.cliente = cliente;
+        this.notaFiscal = notaFiscal;
     }
 
     public Pedido(String status){
@@ -62,6 +64,54 @@ public class Pedido implements Serializable{
 
     public Integer getId(){
         return this.id;
+    }
+
+    public static ArrayList<Pedido> listarPedidos(){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        ArrayList<Pedido> pedidos = null;
+
+        try{
+
+            pedidos = (ArrayList<Pedido>) em.createQuery("SELECT p FROM Pedido p", Pedido.class).getResultList();
+
+        }catch(Exception e){
+
+            System.out.println(e);
+
+        }finally{
+
+            em.close();
+            emf.close();
+
+        }
+
+        return pedidos;
+    }
+
+    public static ArrayList<Pedido> listarPedidosCliente(int id){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+
+        ArrayList<Pedido> pedidos = null;
+
+        try{
+
+            pedidos = (ArrayList<Pedido>) em.createQuery("SELECT p FROM Pedido p WHERE p.cliente.id = :id", Pedido.class).setParameter("id", id).getResultList();
+
+        }catch(Exception e){
+
+            System.out.println(e);
+
+        }finally{
+
+            em.close();
+            emf.close();
+
+        }
+
+        return pedidos;
     }
 
     public static Pedido find(Integer id){

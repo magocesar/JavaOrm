@@ -1,16 +1,13 @@
 package dominio;
 
 import java.io.Serializable;
-import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.NoResultException;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
 import javax.persistence.GenerationType;
 import java.util.ArrayList;

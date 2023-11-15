@@ -41,9 +41,6 @@ public class ClienteHandler {
             }
         }
 
-        Application.printLine();
-        System.out.println("Dados Endereço: ");
-
         while(!emailValido){
             System.out.print("Email: ");
             email = sc.nextLine();
@@ -56,6 +53,9 @@ public class ClienteHandler {
                 System.out.println("Email inválido!");
             }
         }
+
+        Application.printLine();
+        System.out.println("Dados Endereço: ");
 
         while(!cepValido){
             System.out.print("CEP: ");
@@ -241,6 +241,49 @@ public class ClienteHandler {
                         System.out.println("Cliente não encontrado!");
                     }
                 }else if(id == 0){	
+                    valido = true;
+                }else{
+                    System.out.println("ID inválido!");
+                }
+            }catch(Exception e){
+                System.out.println("ID inválido!");
+                sc.nextLine();
+            }
+        }
+    }
+
+    public static void removerCliente(Scanner sc){
+        System.out.println("Remoção de Cliente");
+        System.out.println("ATENÇÃO: Ao remover um cliente, o Endereço, Pedidos e Notas Fiscais relacionados a ele também serão removidos!");
+        System.out.println("Para cancelar, digite 0 (zero).");
+        boolean valido = false;
+        while(!valido){
+            System.out.print("Digite o ID do cliente: ");
+            try{
+                int id = sc.nextInt();
+                sc.nextLine();
+                if(id > 0){
+                    valido = true;
+                    
+                    Cliente cliente = Cliente.find(id);
+
+                    if(cliente != null){
+                        System.out.println("Cliente encontrado!");
+                        Application.printLine();
+                        System.out.println("ID: " + cliente.getId() + " | Nome: " + cliente.getNome() + " | Email: " + cliente.getEmail());
+                        Application.printLine();
+                        System.out.println("Deseja remover o cliente? (S/N)");
+                        String opcao = sc.nextLine();
+                        if(opcao.equals("S") || opcao.equals("s")){
+                            cliente.remove();
+                            System.out.println("Cliente removido com sucesso!");
+                        }else{
+                            System.out.println("Operação cancelada!");
+                        }
+                    }else{
+                        System.out.println("Cliente não encontrado!");
+                    }
+                }else if(id == 0){
                     valido = true;
                 }else{
                     System.out.println("ID inválido!");

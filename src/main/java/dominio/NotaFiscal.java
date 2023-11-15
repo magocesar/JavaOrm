@@ -2,17 +2,14 @@ package dominio;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-
-import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Persistence;
 import javax.persistence.GenerationType;
+import java.util.ArrayList;
 
 @Entity
 public class NotaFiscal implements Serializable{
@@ -22,7 +19,7 @@ public class NotaFiscal implements Serializable{
     private double valor_total;
     private LocalDate data_emissao;
 
-    @OneToOne(mappedBy = "notaFiscal", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
+    @OneToOne
     private Pedido pedido;
 
     public NotaFiscal(){
@@ -65,6 +62,26 @@ public class NotaFiscal implements Serializable{
     public void setPedido(Pedido pedido) {
         this.pedido = pedido;
     }
+
+    public static ArrayList<NotaFiscal> listarNotasFiscais(){
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
+        EntityManager em = emf.createEntityManager();
+        
+        ArrayList<NotaFiscal> notasFiscais = null;
+
+        try{
+            notasFiscais = (ArrayList<NotaFiscal>) em.createQuery("SELECT nf FROM NotaFiscal nf", NotaFiscal.class).getResultList();
+        }catch(Exception e){
+            System.out.println(e);
+        }finally{
+            em.close();
+            emf.close();
+        }
+
+        return notasFiscais;
+    }
+
+
 
     public static NotaFiscal find(Integer id){
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");

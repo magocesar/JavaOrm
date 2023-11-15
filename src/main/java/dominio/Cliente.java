@@ -1,8 +1,6 @@
 
 package dominio;
-
 import java.io.Serializable;
-import javax.annotation.processing.Generated;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -10,7 +8,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Persistence;
 import java.util.List;
 import javax.persistence.GenerationType;
 import java.util.ArrayList;
@@ -26,7 +23,7 @@ public class Cliente implements Serializable{
     @OneToMany(mappedBy = "cliente")
     private List<Pedido> pedidos;
 
-    @OneToOne(mappedBy = "cliente", cascade = javax.persistence.CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "cliente", cascade = javax.persistence.CascadeType.REMOVE, orphanRemoval = true)
     private Endereco endereco;
 
     public Cliente(){
@@ -138,37 +135,33 @@ public class Cliente implements Serializable{
         return commit;
     }
 
-    public boolean update(Endereco endereco){
+    public boolean update(Endereco endereco) {
         EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("ex");
         EntityManager em = emf.createEntityManager();
-        Endereco oldEndereco = this.endereco;
         boolean commit = false;
+        Endereco oldEndereco = this.endereco;
 
         try{
+            setEndereco(endereco);
+            endereco.setCliente(this);
 
-            this.endereco = endereco;
             em.getTransaction().begin();
+            em.persist(endereco);
             em.merge(this);
             em.getTransaction().commit();
             commit = true;
-
         }catch(Exception e){
-
             if(em.getTransaction().isActive()){
                 em.getTransaction().rollback();
             }
-
             this.endereco = oldEndereco;
-
         }finally{
-
             em.close();
             emf.close();
-
         }
-
         return commit;
     }
+    
 
     //Remover um cliente
     public boolean remove(){
@@ -176,12 +169,19 @@ public class Cliente implements Serializable{
         EntityManager em = emf.createEntityManager();
         boolean commit = false;
 
+        ArrayList<Pedido> pedidos_cliente = Pedido.listarPedidosCliente(this.id);
+
         try{
 
-            Cliente cliente = em.find(Cliente.class, this.id);
+            for(Pedido pedido : pedidos_cliente){
+                pedido.getNotaFiscal().remove();
+                pedido.remove();
+            }
 
+            Cliente cliente = em.find(Cliente.class, this.id);
             em.getTransaction().begin();
             em.remove(cliente);
+            em.remove(cliente.getEndereco());
             em.getTransaction().commit();
             commit = true;
         }catch(Exception e){
